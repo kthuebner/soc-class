@@ -1,0 +1,450 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Unit 2 Review Game</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600;700;900&display=swap" rel="stylesheet">
+<style>
+:root{
+  --ink:#1b2a2e; --white:#fff; --rule:#d9dee0; --card:#f2f4f5;
+  --head:#ffd032; --tint:#fff8db; --off:#fff0a8; --accent:#fc7d4b; --accent-txt:#b34a12;
+  --cyan:#00c2d4; --cyan-tint:#e6f9fb; --yellow:#ffd032; --orange:#fc7d4b; --coral:#fb5959;
+  --right:#1f9d55; --right-bg:#e3f6ea; --wrong:#c62828; --wrong-bg:#fde8e8;
+}
+*{box-sizing:border-box}
+body{margin:0;background:#eef1f2;color:var(--ink);font-family:'Montserrat','Segoe UI',Arial,Helvetica,sans-serif;line-height:1.45}
+.wrap{max-width:820px;margin:0 auto;padding:16px}
+.game{background:var(--white);box-shadow:0 1px 0 var(--rule)}
+header{background:var(--head);padding:18px 22px 16px;display:flex;gap:16px;align-items:flex-end;justify-content:space-between}
+.steps{display:flex;gap:4px;align-items:center;margin:0 0 8px}
+.steps span{width:22px;height:6px;background:var(--off)}
+.steps span.on{background:var(--ink)}
+.steps b{font-size:12px;margin-left:6px;white-space:nowrap}
+.kicker{margin:0 0 4px;font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase}
+h1{margin:0;font-size:28px;line-height:1.15;font-weight:900;text-transform:uppercase}
+.badge{background:var(--ink);color:var(--white);font-weight:700;font-size:15px;padding:6px 12px;white-space:nowrap}
+.stage{position:relative;overflow:hidden;min-height:420px}
+.screen{--rc:var(--head);--rt:var(--tint);--ra:var(--accent);--rat:var(--accent-txt);padding:22px;transition:transform .35s ease,opacity .35s ease}
+.screen.enter{transform:translateX(70px);opacity:0}
+.screen.leave{position:absolute;top:0;left:0;right:0;transform:translateX(-70px);opacity:0;pointer-events:none}
+@media (prefers-reduced-motion:reduce){.screen{transition:none}}
+.label{margin:0 0 8px;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase}
+.label.accent{color:var(--rat)}
+.idea{background:var(--rt);border-left:6px solid var(--rc);padding:16px 20px;margin:0 0 18px}
+.idea p{margin:0;font-size:16px}
+.prompt{border-left:6px solid var(--ra);border-top:1px solid var(--rule);border-bottom:1px solid var(--rule);padding:16px 20px;margin:0 0 16px}
+.prompt .q{margin:0;font-size:19px;font-weight:700;line-height:1.45}
+.count{font-size:13px;font-weight:700;color:#4a5a5e;margin:0 0 10px}
+.opts{display:grid;gap:10px}
+.opts.three{grid-template-columns:repeat(3,1fr)}
+@media (max-width:620px){.opts.three{grid-template-columns:1fr}}
+button{font:inherit;color:inherit;cursor:pointer}
+.opt{background:var(--card);border:2px solid transparent;border-top:4px solid var(--rc);padding:14px 16px;font-size:16px;font-weight:700;text-align:left;min-height:56px}
+.opt:hover:not(:disabled){border-color:var(--ink);border-top-color:var(--ink)}
+.opt:focus-visible,.btn:focus-visible,.chip:focus-visible,.idea-card:focus-visible,.bin:focus-visible,input:focus-visible{outline:3px solid var(--ink);outline-offset:2px}
+.opt:disabled{cursor:default}
+.opt.right{background:var(--right-bg);border-color:var(--right);border-top-color:var(--right)}
+.opt.wrong{background:var(--wrong-bg);border-color:var(--wrong);border-top-color:var(--wrong)}
+.opt.dim{opacity:.55}
+.feedback{margin:16px 0 0;padding:14px 18px;background:var(--card);border-left:6px solid var(--ink);font-size:15px}
+.feedback strong{display:block;font-size:16px;margin-bottom:2px}
+.feedback.ok{border-left-color:var(--right)} .feedback.no{border-left-color:var(--wrong)}
+.row{display:flex;justify-content:flex-end;margin-top:16px;gap:10px;flex-wrap:wrap}
+.btn{background:var(--ink);color:var(--white);border:0;padding:12px 20px;font-weight:700;font-size:16px}
+.btn:disabled{opacity:.4;cursor:default}
+
+/* fishbowl sort */
+.tag{background:var(--white);border:3px solid var(--ink);padding:18px 20px;margin:0 0 14px;text-align:center;font-size:22px;font-weight:900;line-height:1.25;animation:drop .3s ease}
+.tag small{display:block;font-size:12px;font-weight:700;letter-spacing:1.5px;text-transform:uppercase;color:var(--rat);margin-bottom:6px}
+@keyframes drop{from{transform:translateY(-12px);opacity:0}to{transform:none;opacity:1}}
+@media (prefers-reduced-motion:reduce){.tag{animation:none}}
+.bins{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.bin{border:3px solid var(--ink);padding:0;text-align:left;background:var(--white);display:flex;flex-direction:column;min-height:190px}
+.bin:hover:not(:disabled){transform:translateY(-2px)}
+.bin:disabled{cursor:default}
+.bin .bh{padding:12px 14px 10px;border-bottom:3px solid var(--ink)}
+.bin .bh b{display:block;font-size:20px;font-weight:900;text-transform:uppercase;line-height:1.1}
+.bin .bh span{font-size:13px;font-weight:700}
+.bin.stuff .bh{background:var(--yellow)}
+.bin.water .bh{background:var(--cyan)}
+.bin.water{background:repeating-linear-gradient(180deg,var(--cyan-tint) 0 14px,#d4f4f8 14px 16px)}
+.bin.stuff{background:var(--tint)}
+.bin ul{list-style:none;margin:0;padding:10px 12px;display:flex;flex-wrap:wrap;gap:6px;align-content:flex-start}
+.bin li{background:var(--white);border:2px solid var(--right);font-size:13px;font-weight:700;padding:4px 8px}
+.bin li.miss{border-color:var(--wrong);text-decoration:line-through;text-decoration-color:var(--wrong)}
+.bin .hint{padding:10px 12px;font-size:13px;color:#4a5a5e;font-style:italic}
+@media (max-width:520px){.bin .bh b{font-size:16px}.tag{font-size:19px}}
+
+/* matching */
+.chips{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 16px}
+@media (max-width:560px){.chips{grid-template-columns:repeat(2,1fr)}}
+.chip{background:var(--ink);color:var(--white);border:3px solid var(--ink);padding:12px 8px;font-weight:700;font-size:15px;text-align:center;transition:transform .15s}
+.chip:hover:not(:disabled){transform:translateY(-2px)}
+.chip.sel{background:var(--rc);color:var(--ink);border-color:var(--ink);box-shadow:0 0 0 3px var(--rc);transform:translateY(-3px)}
+.chip.done{background:var(--right-bg);color:var(--ink);border-color:var(--right);cursor:default}
+.chip.shake,.idea-card.shake{animation:shake .35s}
+@keyframes shake{25%{transform:translateX(-5px)}75%{transform:translateX(5px)}}
+.ideas{display:grid;gap:8px}
+.idea-card{background:var(--card);border:2px solid transparent;border-left:6px solid var(--rc);padding:12px 14px;text-align:left;font-size:15px}
+.idea-card:hover:not(:disabled){border-color:var(--ink)}
+.idea-card.done{background:var(--right-bg);border-color:var(--right);border-left-color:var(--right);cursor:default}
+.idea-card.bad{background:var(--wrong-bg);border-color:var(--wrong)}
+.idea-card .who{display:block;font-weight:900;font-size:13px;text-transform:uppercase;letter-spacing:1px;margin-top:6px}
+
+/* start + final */
+.field{display:grid;gap:6px;margin:0 0 16px}
+.field input{font:inherit;font-size:17px;padding:12px 14px;border:2px solid var(--ink)}
+.cards3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin:0 0 16px}
+@media (max-width:620px){.cards3{grid-template-columns:1fr}}
+.card{background:var(--card);border-top:4px solid var(--head);padding:12px 14px}
+.card b{display:block;font-size:15px;margin-bottom:4px}
+.card span{font-size:14px}
+.boxes{display:flex;gap:12px;margin:6px 0 18px;flex-wrap:wrap}
+.box{width:96px;height:96px;border:3px solid var(--ink);display:flex;flex-direction:column;align-items:center;justify-content:center;background:var(--white)}
+.box .chk{font-size:44px;line-height:1;color:var(--ink);font-weight:900}
+.box .n{font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1px;color:#4a5a5e}
+.box .s{font-size:13px;font-weight:700}
+.final-top{display:flex;gap:20px;align-items:center;flex-wrap:wrap;margin:0 0 14px}
+.big{background:var(--ink);color:var(--white);padding:16px 22px;text-align:center;min-width:170px}
+.big .num{font-size:54px;font-weight:900;line-height:1}
+.big .of{font-size:14px;font-weight:700;letter-spacing:1px;text-transform:uppercase;color:var(--head)}
+.who-line{font-size:20px;font-weight:900;margin:0 0 2px}
+.stamp{font-size:14px;color:#4a5a5e;margin:0}
+table.breakdown{width:100%;border-collapse:collapse;margin:0 0 16px;font-size:15px}
+.breakdown td{padding:8px 10px;border-bottom:1px solid var(--rule)}
+.breakdown td:last-child{text-align:right;font-weight:700}
+.breakdown td:first-child::before{content:"";display:inline-block;width:12px;height:12px;margin-right:10px;vertical-align:-1px;background:var(--c)}
+.note{font-size:14px;font-style:italic;margin:0 0 6px}
+.stripe{display:grid;grid-template-columns:repeat(4,1fr);height:8px}
+.stripe i:nth-child(1){background:var(--cyan)}.stripe i:nth-child(2){background:var(--yellow)}.stripe i:nth-child(3){background:var(--orange)}.stripe i:nth-child(4){background:var(--coral)}
+.rband{background:var(--rc);margin:-22px -22px 18px;padding:22px 22px 18px;display:flex;align-items:flex-end;justify-content:space-between;gap:12px}
+.rband .rn{font-size:13px;font-weight:700;letter-spacing:2px;text-transform:uppercase;margin:0 0 4px}
+.rband h2{margin:0;font-size:32px;font-weight:900;text-transform:uppercase;line-height:1.1}
+.rband .pts{background:var(--ink);color:var(--white);font-weight:700;font-size:15px;padding:6px 12px;white-space:nowrap}
+.rpill{display:inline-block;width:12px;height:12px;background:var(--rc);margin-right:8px;vertical-align:-1px}
+.cards3 .card:nth-child(1){border-top-color:var(--orange)}.cards3 .card:nth-child(2){border-top-color:var(--coral)}.cards3 .card:nth-child(3){border-top-color:var(--cyan)}
+.box.on{border-color:var(--ink)}
+.box.on:nth-child(1){background:var(--orange)}.box.on:nth-child(2){background:var(--coral)}.box.on:nth-child(3){background:var(--cyan)}
+footer{background:var(--ink);color:var(--white);padding:14px 22px;font-size:16px}
+footer strong{color:var(--head)}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <div class="game">
+    <header>
+      <div>
+        <div class="steps" id="steps" aria-hidden="true"></div>
+        <p class="kicker">Unit 2 &middot; Review Game</p>
+        <h1>Culture, Socialization &amp; Race</h1>
+      </div>
+      <div class="badge" id="badge" aria-live="polite">20&nbsp;pts</div>
+    </header>
+    <div class="stripe" aria-hidden="true"><i></i><i></i><i></i><i></i></div>
+    <main class="stage" id="stage"></main>
+    <footer><strong>Play it three times.</strong> The questions shuffle every game, and every round makes the ideas stick a little better.</footer>
+  </div>
+</div>
+
+<script>
+/* ---------- CONTENT (Super Deck Unit 2 + SOC 7 wording) ---------- */
+const ROUNDS = [
+  {
+    id:'bowl', type:'sort', pick:5,
+    c:['var(--yellow)','#fff8db','var(--orange)','#b34a12'],
+    title:'Sort the Fishbowl',
+    idea:'You are the fish, and your culture is the fishbowl. <b>Material culture</b> is the stuff in the bowl: physical objects, resources and spaces you can see and touch. <b>Non-material culture</b> is the water: beliefs, values, norms, rules and language. Drop each card where it belongs.',
+    bins:[
+      {key:'m', cls:'stuff', name:'The Stuff', sub:'Material culture'},
+      {key:'n', cls:'water', name:'The Water', sub:'Non-material culture'}
+    ],
+    pool:[
+      {t:'A prom dress', a:'m', why:'Clothing is a physical object you can touch.'},
+      {t:'A mosque, church or synagogue building', a:'m', why:'Places of worship are physical spaces. The beliefs practiced inside are non-material.'},
+      {t:'A family’s Thanksgiving turkey', a:'m', why:'Food is material culture.'},
+      {t:'A single-family house with a yard', a:'m', why:'Homes are physical spaces, even though owning one connects to the value of the "American Dream."'},
+      {t:'A smartphone', a:'m', why:'It’s a physical object. The rules about when to use it are non-material.'},
+      {t:'A pair of Jordans', a:'m', why:'The shoes are material. The status people attach to them is non-material.'},
+      {t:'The belief that hard work leads to success', a:'n', why:'A belief lives in people’s heads, not in an object.'},
+      {t:'Raising your hand before you talk in class', a:'n', why:'This is a norm, an expectation of behavior.'},
+      {t:'The English language', a:'n', why:'Language is non-material culture.'},
+      {t:'Americans valuing individualism and freedom', a:'n', why:'Values are non-material culture.'},
+      {t:'The expectation that you tip your server', a:'n', why:'This is a norm, an unwritten rule of behavior.'},
+      {t:'Religious beliefs about life after death', a:'n', why:'Beliefs are non-material, even when they’re practiced in physical places.'}
+    ]
+  },
+  {
+    id:'norms', type:'mc', pick:4, layout:'three', fixedOpts:['Folkway','More','Law'],
+    c:['var(--orange)','#fff0e9','var(--yellow)','#8a6400'],
+    title:'Folkway, More or Law?',
+    idea:'<b>Folkways</b> are norms for everyday, socially acceptable behavior. Break one and people might think you’re rude or weird. <b>Mores</b> carry great moral significance. Break one and people think you’re a bad person. <b>Laws</b> are formal rules enforced by the government, and many of them are mores that have been written down.',
+    pool:[
+      {q:'Saying "bless you" when someone sneezes', a:'Folkway', why:'Skipping it is a little rude, but nobody thinks you’re immoral.'},
+      {q:'Shaking hands when you meet someone', a:'Folkway', why:'It’s an everyday custom about polite behavior.'},
+      {q:'Facing the doors in an elevator instead of facing the other people', a:'Folkway', why:'Breaking it is weird, not wrong.'},
+      {q:'Using a fork instead of your hands to eat spaghetti at a restaurant', a:'Folkway', why:'Table manners are classic folkways.'},
+      {q:'Not cheating on your boyfriend or girlfriend', a:'More', why:'It isn’t illegal, but people see breaking it as a serious moral wrong.'},
+      {q:'Not lying to your best friend about something important', a:'More', why:'There’s no law, but it carries real moral weight.'},
+      {q:'Not laughing or joking around at a funeral', a:'More', why:'Breaking it is seen as deeply disrespectful, not just odd.'},
+      {q:'Not driving faster than the posted speed limit', a:'Law', why:'It’s a formal rule enforced by police and fines.'},
+      {q:'Having a license before you drive a car', a:'Law', why:'The government requires it and punishes you without one.'},
+      {q:'Wearing a seatbelt in Kansas', a:'Law', why:'It’s required by state law and enforced with a ticket.'}
+    ]
+  },
+  {
+    id:'match', type:'match',
+    c:['var(--coral)','#ffecec','var(--cyan)','#00727c'],
+    title:'Name That Concept',
+    idea:'Match each concept to the example that shows it. Tap a concept, then tap its example. You get the point only if your <b>first</b> try for that concept is right.',
+    items:[
+      {name:'Ethnocentrism', ex:'A tourist calls another country’s food "disgusting" because it isn’t what they eat at home.', why:'judging another culture by your own culture’s standards.'},
+      {name:'Cultural Relativism', ex:'A student studying abroad tries to understand why her host family eats dinner at 10 p.m. instead of calling it weird.', why:'understanding a culture on its own terms.'},
+      {name:'Cultural Imperialism', ex:'A colonial government makes its own language the only one allowed in schools and courts.', why:'a dominant group pushing its culture onto a group with less power.'},
+      {name:'Assimilation', ex:'Over three generations, an immigrant family stops speaking Italian at home, and the grandkids speak only English.', why:'a minority group taking on the main culture’s customs.'},
+      {name:'Subculture', ex:'Skaters share their own slang, style and values, but still go to school and follow most mainstream rules.', why:'a group that sets itself apart but keeps the main culture’s core principles.'},
+      {name:'Counterculture', ex:'In the 1960s, hippies rejected mainstream ideas about war, work and money and tried to change society.', why:'a group that pushes back against mainstream culture to change how society works.'}
+    ]
+  },
+  {
+    id:'social', type:'mc', pick:5, layout:'list', shuffleOpts:true,
+    c:['var(--cyan)','#e6f9fb','var(--coral)','#b8282a'],
+    title:'Socialization Station',
+    idea:'<b>Socialization</b> is how, from birth to death, we learn the norms, customs, values and roles of our society. It happens through <b>agents of socialization</b>: the family, the peer group, the school and the mass media.',
+    pool:[
+      {q:'Your parents take you to religious services every week when you’re little. Which agent of socialization is at work?', opts:['The family','The peer group','The school','The mass media'], a:'The family', why:'Family is usually the first and most powerful agent of socialization.'},
+      {q:'Your friends tease you for liking a band until you stop listening to it. Which agent of socialization is at work?', opts:['The peer group','The family','The school','The mass media'], a:'The peer group', why:'Peers teach norms through approval and teasing.'},
+      {q:'A popular YouTuber’s videos shape what millions of teens think is cool to wear. Which agent of socialization is at work?', opts:['The mass media','The peer group','The family','The school'], a:'The mass media', why:'Media reaches huge audiences at once and shapes what feels normal.'},
+      {q:'A teacher praises students who raise their hands before talking. Which agent of socialization is at work?', opts:['The school','The family','The peer group','The mass media'], a:'The school', why:'Schools teach rules and roles, not just subjects.'},
+      {q:'A college freshman learns how to live with a roommate from a totally different background. What kind of socialization is this?', opts:['Secondary socialization','Primary socialization','Internalization'], a:'Secondary socialization', why:'It comes from new groups and situations outside your early upbringing.'},
+      {q:'A toddler learns to say "please" and "thank you" from her grandparents. What kind of socialization is this?', opts:['Primary socialization','Secondary socialization','Assimilation'], a:'Primary socialization', why:'Primary socialization runs from birth through adolescence and is guided by family and caregivers.'},
+      {q:'You keep your phone silent during a movie even when no one would notice, because it just feels wrong not to. This is…', opts:['Internalization','Ethnocentrism','Cultural relativism','Counterculture'], a:'Internalization', why:'You’ve accepted the norm as your own, so you follow it without being watched.'},
+      {q:'Children learn which colors and sports are "for boys" or "for girls." Which characteristic of culture does this show?', opts:['Culture is learned','Culture is adaptive and always changing','Culture is shared'], a:'Culture is learned', why:'None of it is biologically set. It’s taught.'},
+      {q:'Attitudes toward interracial marriage changed dramatically in just a few decades. Which characteristic of culture does this show?', opts:['Culture is adaptive and always changing','Culture is learned','Culture is passed down'], a:'Culture is adaptive and always changing', why:'New generations drop parts of culture and adopt new ones.'},
+      {q:'A shared heritage based on traditions, religion, language and ancestry is…', opts:['Ethnicity','Race','Social class'], a:'Ethnicity', why:'Ethnicity is more connected to culture than race is.'},
+      {q:'A socially constructed category of people who share physical traits that a society treats as important is…', opts:['Race','Ethnicity','Socioeconomic status'], a:'Race', why:'Race is a social category. Society decides which traits count.'},
+      {q:'A welder and a professor earn the same pay. Who usually has the higher socioeconomic status (SES), and why?', opts:['The professor, because SES also counts education and job prestige','The welder, because their skills are in demand','They’re equal, because SES is just income'], a:'The professor, because SES also counts education and job prestige', why:'SES combines wealth, education and occupation, not just pay.'},
+      {q:'Horace Miner’s "Body Ritual Among the Nacirema" describes a strange tribe. Who are the Nacirema?', opts:['Americans','A tribe in the Amazon','Ancient Egyptians'], a:'Americans', why:'"Nacirema" is "American" spelled backward. It shows how odd our own culture looks to fresh eyes.'}
+    ]
+  }
+];
+const TOTAL = 20; // 5 + 4 + 6 + 5
+const STORE = 'soc-unit2-review-attempts';
+const NAMEKEY = 'soc-review-name';
+
+/* ---------- STORAGE (safe) ---------- */
+let memAttempts = [];
+function loadAttempts(){ try{ const v=JSON.parse(localStorage.getItem(STORE)||'[]'); return Array.isArray(v)?v:[]; }catch(e){ return memAttempts; } }
+function saveAttempts(a){ memAttempts=a; try{ localStorage.setItem(STORE,JSON.stringify(a)); return true; }catch(e){ return false; } }
+function loadName(){ try{ return localStorage.getItem(NAMEKEY)||''; }catch(e){ return ''; } }
+function saveName(n){ try{ localStorage.setItem(NAMEKEY,n); }catch(e){} }
+
+/* ---------- HELPERS ---------- */
+const $ = s => document.querySelector(s);
+const esc = s => String(s).replace(/[&<>"]/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c]));
+function shuffle(a){ a=a.slice(); for(let i=a.length-1;i>0;i--){ const j=Math.floor(Math.random()*(i+1)); [a[i],a[j]]=[a[j],a[i]]; } return a; }
+const stage = $('#stage');
+let current = null;
+function show(html,c){
+  const el=document.createElement('section'); el.className='screen enter'; el.innerHTML=html;
+  if(c){ ['--rc','--rt','--ra','--rat'].forEach((v,i)=>el.style.setProperty(v,c[i])); }
+  stage.appendChild(el); void el.offsetWidth; el.classList.remove('enter');
+  if(current){ const old=current; old.classList.add('leave'); setTimeout(()=>old.remove(),380); }
+  current=el; window.scrollTo({top:0,behavior:'smooth'});
+  const f=el.querySelector('[data-focus]'); if(f) setTimeout(()=>f.focus({preventScroll:true}),360);
+  return el;
+}
+function setSteps(n){
+  $('#steps').innerHTML = ROUNDS.map((_,i)=>`<span class="${i<n?'on':''}"></span>`).join('') + `<b>${n?`Round ${Math.min(n,4)} of 4`:'4 rounds'}</b>`;
+}
+function setBadge(){ $('#badge').innerHTML = game ? `${game.score}&nbsp;/&nbsp;${TOTAL}` : `${TOTAL}&nbsp;pts`; }
+function boxesHTML(attempts){
+  return [0,1,2].map(i=>{ const a=attempts[i];
+    return `<div class="box ${a?'on':''}" aria-label="Attempt ${i+1} ${a?'done, score '+a.score:'not done'}">
+      ${a?`<span class="chk">&#10003;</span><span class="s">${a.score} / ${TOTAL}</span>`:`<span class="n">Play ${i+1}</span>`}</div>`; }).join('');
+}
+const roundPts = r => r.type==='match' ? r.items.length : r.pick;
+const nextLabel = (i,last) => last ? (i+1<ROUNDS.length?'Next round &rarr;':'See my score &rarr;') : null;
+
+/* ---------- GAME ---------- */
+let game = null;
+
+function startScreen(){
+  game=null; setSteps(0); setBadge();
+  const att=loadAttempts(); const done=Math.min(att.length,3);
+  show(`
+    <div class="idea"><p class="label">How it works</p><p>Four short rounds on Unit 2. Each answer is worth 1 point, for <b>${TOTAL} points</b> per game. Questions shuffle every time you play.</p></div>
+    <div class="cards3">
+      <div class="card"><b>1. Play</b><span>Answer each question. You'll see the right answer and why after each one.</span></div>
+      <div class="card"><b>2. Screenshot</b><span>When you finish, screenshot the final score page.</span></div>
+      <div class="card"><b>3. Three times</b><span>Fill all three boxes, then upload your screenshot to Canvas.</span></div>
+    </div>
+    <p class="label">Your plays so far &middot; ${done} of 3</p>
+    <div class="boxes">${boxesHTML(att)}</div>
+    <div class="field"><label class="label" for="nm">Your first and last name</label>
+      <input id="nm" autocomplete="name" value="${esc(loadName())}" placeholder="First Last" data-focus></div>
+    <div class="row"><button class="btn" id="go">Start game</button></div>`);
+  const nm=current.querySelector('#nm'), go=current.querySelector('#go');
+  const ok=()=>{ go.disabled = nm.value.trim().length<2; };
+  nm.addEventListener('input',ok); ok();
+  nm.addEventListener('keydown',e=>{ if(e.key==='Enter' && !go.disabled) go.click(); });
+  go.onclick=()=>{ const n=nm.value.trim(); saveName(n);
+    game={name:n, score:0, results:ROUNDS.map(r=>({title:r.title,got:0,of:0}))};
+    roundIntro(0); };
+}
+
+function roundIntro(i){
+  setSteps(i+1); setBadge();
+  const r=ROUNDS[i];
+  show(`
+    <div class="rband"><div><p class="rn">Round ${i+1} of 4</p><h2>${r.title}</h2></div><span class="pts">${roundPts(r)}&nbsp;pts</span></div>
+    <div class="idea"><p class="label">The Idea</p><p>${r.idea}</p></div>
+    <div class="row"><button class="btn" data-focus id="b">Let's go &rarr;</button></div>`, r.c);
+  current.querySelector('#b').onclick=()=> ({sort:sortRound, match:matchRound, mc:mcRound})[r.type](i);
+}
+
+function point(i){ game.score++; game.results[i].got++; setBadge(); }
+
+/* Round type: sort cards into two bins */
+function sortRound(i){
+  const r=ROUNDS[i];
+  // at least 2 from each bin, rest random
+  const byBin=r.bins.map(b=>shuffle(r.pool.filter(p=>p.a===b.key)));
+  let cards=[byBin[0][0],byBin[0][1],byBin[1][0],byBin[1][1]];
+  const rest=shuffle(r.pool.filter(p=>!cards.includes(p)));
+  cards=shuffle(cards.concat(rest.slice(0,r.pick-4)));
+  game.results[i].of=cards.length;
+  const placed={}; r.bins.forEach(b=>placed[b.key]=[]);
+  let k=0;
+  const draw=()=>{
+    const it=cards[k];
+    show(`
+      <p class="count"><span class="rpill"></span>Round ${i+1} &middot; ${r.title} &middot; Card ${k+1} of ${cards.length}</p>
+      <div class="tag"><small>Where does this go?</small>${esc(it.t)}</div>
+      <div class="bins">${r.bins.map((b,j)=>`<button class="bin ${b.cls}" data-k="${b.key}" ${j===0?'data-focus':''}>
+        <span class="bh"><b>${b.name}</b><span>${b.sub}</span></span>
+        ${placed[b.key].length?`<ul>${placed[b.key].map(p=>`<li class="${p.ok?'':'miss'}">${esc(p.t)}</li>`).join('')}</ul>`:'<span class="hint">Tap to drop the card here</span>'}
+      </button>`).join('')}</div>
+      <div id="fb" aria-live="polite"></div>
+      <div class="row"><button class="btn" id="nx" hidden>${k+1<cards.length?'Next card &rarr;':nextLabel(i,true)}</button></div>`, r.c);
+    const el=current;
+    el.querySelectorAll('.bin').forEach(bin=>bin.onclick=()=>{
+      const ok=bin.dataset.k===it.a;
+      const right=r.bins.find(b=>b.key===it.a);
+      placed[it.a].push({t:it.t, ok});
+      if(ok) point(i);
+      el.querySelectorAll('.bin').forEach(b=>b.disabled=true);
+      const tgt=el.querySelector(`.bin[data-k="${it.a}"]`);
+      const list=tgt.querySelector('ul')||(()=>{ tgt.querySelector('.hint')?.remove(); const u=document.createElement('ul'); tgt.appendChild(u); return u; })();
+      list.insertAdjacentHTML('beforeend',`<li class="${ok?'':'miss'}">${esc(it.t)}</li>`);
+      el.querySelector('#fb').innerHTML=`<div class="feedback ${ok?'ok':'no'}"><strong>${ok?'Correct!':'Not quite. It goes in '+right.name+' ('+right.sub.toLowerCase()+').'}</strong>${esc(it.why)}</div>`;
+      const nx=el.querySelector('#nx'); nx.hidden=false; nx.focus();
+      nx.onclick=()=>{ k++; if(k<cards.length) draw(); else next(i); };
+    });
+  };
+  draw();
+}
+
+/* Round type: multiple choice */
+function mcRound(i){
+  const r=ROUNDS[i]; const qs=shuffle(r.pool).slice(0,r.pick);
+  game.results[i].of=qs.length;
+  let k=0;
+  const ask=()=>{
+    const it=qs[k];
+    const opts = r.fixedOpts ? r.fixedOpts : (r.shuffleOpts ? shuffle(it.opts) : it.opts);
+    const cls = r.layout==='three'?'opts three':'opts';
+    show(`
+      <p class="count"><span class="rpill"></span>Round ${i+1} &middot; ${r.title} &middot; Question ${k+1} of ${qs.length}</p>
+      <div class="prompt"><p class="label accent">${r.fixedOpts?'Which kind of norm is this?':'Your Question'}</p><p class="q">${esc(it.q)}</p></div>
+      <div class="${cls}">${opts.map((o,j)=>`<button class="opt" data-o="${esc(o)}" ${j===0?'data-focus':''}>${esc(o)}</button>`).join('')}</div>
+      <div id="fb" aria-live="polite"></div>
+      <div class="row"><button class="btn" id="nx" hidden>${k+1<qs.length?'Next question &rarr;':nextLabel(i,true)}</button></div>`, r.c);
+    const el=current;
+    el.querySelectorAll('.opt').forEach(b=>b.onclick=()=>{
+      const right=b.dataset.o===it.a;
+      el.querySelectorAll('.opt').forEach(x=>{ x.disabled=true;
+        if(x.dataset.o===it.a) x.classList.add('right'); else if(x===b) x.classList.add('wrong'); else x.classList.add('dim'); });
+      if(right) point(i);
+      el.querySelector('#fb').innerHTML=`<div class="feedback ${right?'ok':'no'}"><strong>${right?'Correct!':'Not quite. It’s '+esc(it.a)+'.'}</strong>${esc(it.why)}</div>`;
+      const nx=el.querySelector('#nx'); nx.hidden=false; nx.focus();
+      nx.onclick=()=>{ k++; if(k<qs.length) ask(); else next(i); };
+    });
+  };
+  ask();
+}
+
+/* Round type: match concept to example */
+function matchRound(i){
+  const r=ROUNDS[i]; game.results[i].of=r.items.length;
+  const names=shuffle(r.items), exs=shuffle(r.items);
+  const state={sel:null, missed:new Set(), done:new Set()};
+  show(`
+    <p class="count"><span class="rpill"></span>Round ${i+1} &middot; ${r.title} &middot; Tap a concept, then its example</p>
+    <div class="chips">${names.map((it,j)=>`<button class="chip" data-n="${esc(it.name)}" ${j===0?'data-focus':''}>${esc(it.name)}</button>`).join('')}</div>
+    <div class="ideas">${exs.map(it=>`<button class="idea-card" data-n="${esc(it.name)}">${esc(it.ex)}</button>`).join('')}</div>
+    <div id="fb" aria-live="polite"></div>
+    <div class="row"><button class="btn" id="nx" hidden>${nextLabel(i,true)}</button></div>`, r.c);
+  const el=current;
+  const chips=[...el.querySelectorAll('.chip')], cards=[...el.querySelectorAll('.idea-card')];
+  const fb=el.querySelector('#fb');
+  chips.forEach(c=>c.onclick=()=>{ if(state.done.has(c.dataset.n)) return;
+    chips.forEach(x=>x.classList.remove('sel')); c.classList.add('sel'); state.sel=c.dataset.n; fb.innerHTML=''; });
+  cards.forEach(card=>card.onclick=()=>{
+    if(state.done.has(card.dataset.n)) return;
+    if(!state.sel){ fb.innerHTML=`<div class="feedback"><strong>Pick a concept first.</strong>Tap one of the dark concept tiles, then tap its example.</div>`; return; }
+    const chip=chips.find(x=>x.dataset.n===state.sel);
+    if(card.dataset.n===state.sel){
+      const it=r.items.find(x=>x.name===state.sel);
+      state.done.add(state.sel);
+      const first=!state.missed.has(state.sel);
+      if(first) point(i);
+      chip.classList.remove('sel'); chip.classList.add('done'); chip.disabled=true;
+      card.classList.add('done'); card.disabled=true;
+      card.insertAdjacentHTML('beforeend',`<span class="who">${esc(it.name)}</span>`);
+      fb.innerHTML=`<div class="feedback ok"><strong>${first?'Match! +1':'Match! (no point this time)'}</strong>${esc(it.name)} means ${esc(it.why)}</div>`;
+      state.sel=null;
+      if(state.done.size===r.items.length){ const nx=el.querySelector('#nx'); nx.hidden=false; nx.focus(); nx.onclick=()=>next(i); }
+    } else {
+      state.missed.add(state.sel);
+      card.classList.add('bad','shake'); chip.classList.add('shake');
+      setTimeout(()=>{ card.classList.remove('bad','shake'); chip.classList.remove('shake'); },500);
+      fb.innerHTML=`<div class="feedback no"><strong>Not that one.</strong>${esc(state.sel)} can still be matched, but won't earn a point this game.</div>`;
+    }
+  });
+}
+
+function next(i){ if(i+1<ROUNDS.length) roundIntro(i+1); else finish(); }
+
+function finish(){
+  setSteps(4);
+  const now=new Date();
+  const att=loadAttempts();
+  att.push({score:game.score, at:now.toISOString()});
+  const stored=saveAttempts(att);
+  const playNo=att.length, doneAll=att.length>=3;
+  show(`
+    <div class="final-top">
+      <div class="big"><div class="num">${game.score}</div><div class="of">out of ${TOTAL}</div></div>
+      <div>
+        <p class="who-line">${esc(game.name)}</p>
+        <p class="stamp">Unit 2 Review Game &middot; Play ${playNo}</p>
+        <p class="stamp">${now.toLocaleDateString(undefined,{weekday:'short',month:'short',day:'numeric',year:'numeric'})} &middot; ${now.toLocaleTimeString(undefined,{hour:'numeric',minute:'2-digit'})}</p>
+      </div>
+    </div>
+    <p class="label">Your three plays</p>
+    <div class="boxes">${boxesHTML(att.slice(0,3))}</div>
+    <table class="breakdown">${game.results.map((r,j)=>`<tr><td style="--c:${ROUNDS[j].c[0]}">${esc(r.title)}</td><td>${r.got} / ${r.of}</td></tr>`).join('')}</table>
+    <div class="idea" style="margin-bottom:0"><p>${doneAll
+      ? '<b>All three boxes are checked.</b> Screenshot this page and upload it to Canvas.'
+      : `<b>Screenshot this page,</b> then play again. ${3-att.length} more ${3-att.length===1?'play':'plays'} to fill every box.`}</p></div>
+    ${stored?'':'<p class="note" style="margin-top:10px">This browser isn’t saving your plays, so finish all three in one sitting without closing the tab.</p>'}
+    <div class="row"><button class="btn" id="again" data-focus>${doneAll?'Play again for practice':'Play again &rarr;'}</button></div>`);
+  current.querySelector('#again').onclick=()=>{ game=null; startScreen(); };
+}
+
+startScreen();
+</script>
+</body>
+</html>
